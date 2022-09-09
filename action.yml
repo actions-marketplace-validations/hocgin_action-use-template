@@ -1,10 +1,28 @@
-name: 'action-env'
+name: 'action-use-template'
 author: 'hocgin'
-description: '项目环境判定'
-#inputs:
-outputs:
+description: '在使用`use template repository`时候，替换模版仓库里面的变量'
+inputs:
+  left_delim:
+    required: true
+    default: '<<['
+    description: '变量左匹配符'
+  right_delim:
+    required: true
+    default: ']>>'
+    description: '变量右匹配符'
+  path:
+    required: true
+    default: '**/*'
+    description: '作用文件或目录'
+  excludes:
+    description: '忽略文件或目录(,分隔)'
+  overflow_readme_file:
+    description: '覆盖 README.md 的文件路径'
+  env_file:
+    description: '替换的变量文件路径(JSON格式)'
   env:
-    description: '最终环境: dev/test/rls/prod/unknown'
+    description: '替换的变量列表: key=value,key2=value2'
+#outputs:
 runs:
   using: node12
   main: dist/index.js

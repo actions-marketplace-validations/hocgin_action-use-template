@@ -1,16 +1,38 @@
-# action-env
+# action-use-template
 
-## 如何使用
-1. 编写 action.yml
-   - `name` action 的名称
-   - `author` 作者
-   - `description` 描述 github action 的作用 
-   - `inputs` 定义需要的输入参数
-   - `outputs` 定义产生的输出参数
+> 在使用`use template repository`时候，替换模版仓库里面的变量
 
-2. 编写主流程 `src/core.ts
-3. 编写测试代码 `src/core.test.ts`
-4. 运行`yarn build`生成 action 代码
+### 配置参数
 
+|字段| 默认值    | 描述                       |
+|---|--------|--------------------------|
+|path| \*\*/* | 作用文件或目录                  |
+|excludes| -      | 忽略文件或目录(,分隔)，默认不处理              |
+|overflow_readme_file| -      | 覆盖 README.md 的文件路径，默认不处理 |
+|env_file| -      | 替换的变量文件路径(JSON格式) |
+|env| -      | 替换的变量列表: key=value,key2=value2 |
+|left_delim| <<[    | 变量左匹配符 |
+|right_delim| ]>>    | 变量右匹配符 |
 
-**可选** 如果需要在本地测试 Github Action 可以参考 [nektos/act](https://github.com/nektos/act) 项目
+### 使用
+
+**env config**
+
+my_props=hocgin
+
+**file content**
+
+username is <<[ my_props ]>>
+
+**file content result**
+
+username is hocgin
+
+### 替换内置的变量
+
+| 链接   | 用途                         |
+|------|----------------------------|
+| repository_name | action-use-template        |
+| repository_full_name | hocgin/action-use-template |
+| repository_html_url | www.hocgin.top             |
+| git_ref | git:sha-8                  |
