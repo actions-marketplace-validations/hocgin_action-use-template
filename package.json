@@ -1,7 +1,7 @@
 {
-  "name": "action-env",
+  "name": "action-use-template",
   "version": "1.0.0",
-  "description": "action-env",
+  "description": "action-use-template",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && ncc build lib/main.js",
