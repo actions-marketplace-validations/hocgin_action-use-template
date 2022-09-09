@@ -4703,11 +4703,6 @@ symbol-tree@^3.2.4:
   resolved "https://registry.npm.taobao.org/symbol-tree/download/symbol-tree-3.2.4.tgz#430637d248ba77e078883951fb9aa0eed7c63fa2"
   integrity sha1-QwY30ki6d+B4iDlR+5qg7tfGP6I=
 
-template.js@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.npmjs.org/template.js/-/template.js-0.1.0.tgz#5f83480178c3aff37b6982a7e07097ee75fa66c7"
-  integrity sha512-qxgvzxQC6UG0u9xo8NYtDq5OmWEyWjFQdVr/oELeCHuF0RF1kM3HlHl+DPFj6dbGcwq8+EiZIWTffrs4ZryOYg==
-
 terminal-link@^2.0.0:
   version "2.1.1"
   resolved "https://registry.npm.taobao.org/terminal-link/download/terminal-link-2.1.1.tgz#14a64a27ab3c0df933ea546fba55f2d078edc994"
