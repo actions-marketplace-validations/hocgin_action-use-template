@@ -108,7 +108,7 @@ let templateFile = (inputFile: string, outputFile: string, leftDelim: string, ri
         let keyRegex = new RegExp(`${leftDelim}\s${key}\s${rightDelim}`, 'g');
         txt = txt.replace(keyRegex, value);
     }
-    fs.writeFileSync(txt, outputFile, {flag: 'w'})
+    fs.writeFileSync(outputFile, txt, {flag: 'w'})
 }
 
 let escape = (text: string): string => {
