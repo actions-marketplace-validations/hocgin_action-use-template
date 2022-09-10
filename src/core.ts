@@ -8,7 +8,7 @@ import {glob} from "glob";
 import {Inputs} from "./main";
 
 
-export async function run(input: Inputs) {
+export function run(input: Inputs) {
     const octokit = getOctokit(process.env.GITHUB_TOKEN!);
     let context = github.context;
     let repository_name = context.payload.repository?.name;
