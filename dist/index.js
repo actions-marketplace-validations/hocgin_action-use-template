@@ -1062,12 +1062,12 @@ function run(input) {
             tree: currentCommit.data.tree.sha,
             parents: [currentCommit.data.sha],
         });
-        console.log('context.ref', context.ref);
         yield octokit.git.updateRef({
             owner,
             repo,
-            ref: context.ref,
+            ref: context.ref.substring(5),
             sha: newCommit.data.sha,
+            force: true
         });
     });
 }
