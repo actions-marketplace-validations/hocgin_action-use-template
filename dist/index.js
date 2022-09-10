@@ -1055,6 +1055,7 @@ function run(input) {
             repo,
             commit_sha: context.sha,
         });
+        console.log('currentCommit', currentCommit);
         let newCommit = yield octokit.git.createCommit({
             owner,
             repo,
@@ -1062,6 +1063,7 @@ function run(input) {
             tree: currentCommit.data.tree.sha,
             parents: [currentCommit.data.sha],
         });
+        console.log('newCommit', newCommit);
         yield octokit.git.updateRef({
             owner,
             repo,
