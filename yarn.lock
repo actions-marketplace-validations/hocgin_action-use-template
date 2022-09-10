@@ -1575,7 +1575,14 @@
   dependencies:
     "@types/istanbul-lib-report" "*"
 
-"@types/jest@^29.0.0":
+"@types/jest-when@^3.5.2":
+  version "3.5.2"
+  resolved "https://registry.npmjs.org/@types/jest-when/-/jest-when-3.5.2.tgz#7e6225e827267d26f115dc97da6403a3b37556c5"
+  integrity sha512-1WP+wJDW7h4TYAVLoIebxRIVv8GPk66Qsq2nU7PkwKZ6usurnDQZgk0DfBNKAJ9gVzapCXSV53Vn/3nBHBNzAw==
+  dependencies:
+    "@types/jest" "*"
+
+"@types/jest@*", "@types/jest@^29.0.0":
   version "29.0.0"
   resolved "https://registry.npmjs.org/@types/jest/-/jest-29.0.0.tgz#bc66835bf6b09d6a47e22c21d7f5b82692e60e72"
   integrity sha512-X6Zjz3WO4cT39Gkl0lZ2baFRaEMqJl5NC1OjElkwtNzAlbkr2K/WJXkBkH5VP0zx4Hgsd2TZYdOEfvp2Dxia+Q==
@@ -3485,6 +3492,11 @@ jest-watcher@^26.6.2:
     jest-util "^26.6.2"
     string-length "^4.0.1"
 
+jest-when@^3.5.1:
+  version "3.5.1"
+  resolved "https://registry.npmjs.org/jest-when/-/jest-when-3.5.1.tgz#33ab6f923661cf878cd08fe9df64b507934603db"
+  integrity sha512-o+HiaIVCg1IC95sMDKHU9G5v5N5l3UHqXvJpf0PgAMThZeQo4Hf5Sgoj+wpCBRGg4/KtzSAZZZEKNiLqE0i4eQ==
+
 jest-worker@^26.6.2:
   version "26.6.2"
   resolved "https://registry.npm.taobao.org/jest-worker/download/jest-worker-26.6.2.tgz#7f72cbc4d643c365e27b9fd775f9d0eaa9c7a8ed"
@@ -4702,11 +4714,6 @@ symbol-tree@^3.2.4:
   version "3.2.4"
   resolved "https://registry.npm.taobao.org/symbol-tree/download/symbol-tree-3.2.4.tgz#430637d248ba77e078883951fb9aa0eed7c63fa2"
   integrity sha1-QwY30ki6d+B4iDlR+5qg7tfGP6I=
-
-template.js@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.npmjs.org/template.js/-/template.js-0.1.0.tgz#5f83480178c3aff37b6982a7e07097ee75fa66c7"
-  integrity sha512-qxgvzxQC6UG0u9xo8NYtDq5OmWEyWjFQdVr/oELeCHuF0RF1kM3HlHl+DPFj6dbGcwq8+EiZIWTffrs4ZryOYg==
 
 terminal-link@^2.0.0:
   version "2.1.1"

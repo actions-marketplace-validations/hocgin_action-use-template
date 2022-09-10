@@ -1,4 +1,3 @@
-import core from '@actions/core';
 import github, {getOctokit} from '@actions/github';
 import {
     RepositoryCreatedEvent
@@ -6,29 +5,10 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import {glob} from "glob";
+import {Inputs} from "./main";
 
 
-interface Inputs {
-    path: string;
-    left_delim: string;
-    right_delim: string;
-    excludes?: string;
-    overflow_readme_file?: string;
-    env_file?: string;
-    env?: string;
-}
-
-let getInput = (): Inputs => ({
-    left_delim: core.getInput('left_delim'),
-    right_delim: core.getInput('right_delim'),
-    path: core.getInput('path'),
-    excludes: core.getInput('excludes'),
-    overflow_readme_file: core.getInput('overflow_readme_file'),
-    env_file: core.getInput('env_file'),
-    env: core.getInput('env'),
-})
-
-export async function run() {
+export async function run(input: Inputs) {
     const octokit = getOctokit(process.env.GITHUB_TOKEN!);
     let context = github.context;
     let repository_name = context.payload.repository?.name;
@@ -36,7 +16,6 @@ export async function run() {
     let repository_html_url = context.payload.repository?.html_url;
     let git_ref = context.ref;
 
-    let input = getInput();
     let envFile = input.env_file;
     let leftDelim = input.left_delim;
     let rightDelim = input.right_delim;
