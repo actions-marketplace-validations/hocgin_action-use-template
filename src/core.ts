@@ -1,4 +1,4 @@
-import github, {getOctokit} from '@actions/github';
+import * as github from '@actions/github';
 import {
     RepositoryCreatedEvent
 } from '@octokit/webhooks-definitions/schema'
@@ -8,8 +8,8 @@ import {glob} from "glob";
 import {Inputs} from "./main";
 
 
-export function run(input: Inputs) {
-    const octokit = getOctokit(process.env.GITHUB_TOKEN!);
+export async function run(input: Inputs) {
+    const octokit = github.getOctokit(process.env.GITHUB_TOKEN!);
     let context = github.context;
     let repository_name = context.payload.repository?.name;
     let repository_full_name = context.payload.repository?.full_name;
@@ -24,8 +24,8 @@ export function run(input: Inputs) {
     let excludes = (input.excludes ?? '').split(',').map((value) => value.trim());
     let sender;
 
-    if (github.context.eventName === 'created') {
-        const payload = github.context.payload as RepositoryCreatedEvent;
+    if (context.eventName === 'created') {
+        const payload = context.payload as RepositoryCreatedEvent;
         sender = payload.sender;
         payload.repository.master_branch;
     }
