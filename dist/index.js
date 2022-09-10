@@ -1045,8 +1045,13 @@ function run(input) {
                 .filter(value => value.length === 2).forEach(value => envJson[value[0]] = value[1]);
             envObject = Object.assign(Object.assign({}, envObject), envJson);
         }
+        let basePathLength = `${baseDir}/`.length;
+        let changeFiles = [];
         for (let file of files) {
-            templateFile(file, file, leftDelim, rightDelim, envObject);
+            let isChanged = templateFile(file, file, leftDelim, rightDelim, envObject);
+            if (isChanged) {
+                changeFiles.push(file.substring(basePathLength));
+            }
         }
         let owner = context.repo.owner;
         let repo = context.repo.repo;
@@ -1055,17 +1060,28 @@ function run(input) {
             repo,
             commit_sha: context.sha,
         });
+        const createTree = yield octokit.git.createTree({
+            owner,
+            repo,
+            base_tree: currentCommit.data.tree.sha,
+            tree: changeFiles.map(path => ({
+                path,
+                mode: '100644',
+                content: String(fs.readFileSync(path))
+            }))
+        });
+        let newTreeSha = createTree.data.sha;
         let newCommit = yield octokit.git.createCommit({
             owner,
             repo,
-            message: 'initial',
-            tree: currentCommit.data.tree.sha,
+            message: 'update template variables',
+            tree: newTreeSha,
             parents: [currentCommit.data.sha],
         });
         yield octokit.git.updateRef({
             owner,
             repo,
-            ref: context.ref.substring(5),
+            ref: context.ref.substring('refs/'.length),
             sha: newCommit.data.sha,
             force: true
         });
@@ -1074,25 +1090,27 @@ function run(input) {
 exports.run = run;
 let templateFile = (inputFile, outputFile, leftDelim, rightDelim, jsonObject = {}) => {
     var _a;
+    console.log(`template file: ${inputFile}, output file: ${outputFile}`);
     if (!fs.existsSync(inputFile)) {
-        return;
+        return false;
     }
     leftDelim = escape(leftDelim);
     rightDelim = escape(rightDelim);
     let keys = (_a = Object.keys(jsonObject)) !== null && _a !== void 0 ? _a : [];
     let data = fs.readFileSync(inputFile);
     if (!data) {
-        return;
+        return false;
     }
     let txt = String(data);
     for (let key of keys) {
         if (!key)
-            return;
+            return false;
         let value = jsonObject[key];
         let keyRegex = new RegExp(`${leftDelim}\s${key}\s${rightDelim}`, 'g');
         txt = txt.replace(keyRegex, value);
     }
     fs.writeFileSync(outputFile, txt, { flag: 'w' });
+    return true;
 };
 let escape = (text) => {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
