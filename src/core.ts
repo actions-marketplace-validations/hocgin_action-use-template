@@ -67,8 +67,13 @@ export async function run(input: Inputs) {
             ...envJson
         }
     }
+
+    let changeFiles = [];
     for (let file of files) {
-        templateFile(file, file, leftDelim, rightDelim, envObject);
+        let isChanged = templateFile(file, file, leftDelim, rightDelim, envObject);
+        if (isChanged) {
+            changeFiles.push(file);
+        }
     }
 
     let owner = context.repo.owner;
@@ -80,11 +85,24 @@ export async function run(input: Inputs) {
         commit_sha: context.sha,
     });
 
+    const createTree = await octokit.git.createTree({
+        owner,
+        repo,
+        base_tree: currentCommit.data.tree.sha,
+        tree: changeFiles.map(path => ({
+            path,
+            mode: '100644',
+            content: String(fs.readFileSync(path))
+        }))
+    })
+
+    let newTreeSha = createTree.data.sha;
+
     let newCommit = await octokit.git.createCommit({
         owner,
         repo,
         message: 'update template variables',
-        tree: currentCommit.data.tree.sha,
+        tree: newTreeSha,
         parents: [currentCommit.data.sha],
     });
 
@@ -97,10 +115,10 @@ export async function run(input: Inputs) {
     });
 }
 
-let templateFile = (inputFile: string, outputFile: string, leftDelim: string, rightDelim: string, jsonObject: any = {}) => {
+let templateFile = (inputFile: string, outputFile: string, leftDelim: string, rightDelim: string, jsonObject: any = {}): boolean => {
     console.log(`template file: ${inputFile}, output file: ${outputFile}`);
     if (!fs.existsSync(inputFile)) {
-        return;
+        return false;
     }
     leftDelim = escape(leftDelim);
     rightDelim = escape(rightDelim);
@@ -109,17 +127,18 @@ let templateFile = (inputFile: string, outputFile: string, leftDelim: string, ri
     let data = fs.readFileSync(inputFile);
 
     if (!data) {
-        return;
+        return false;
     }
     let txt: string = String(data);
 
     for (let key of keys) {
-        if (!key) return
+        if (!key) return false;
         let value = jsonObject[key];
         let keyRegex = new RegExp(`${leftDelim}\s${key}\s${rightDelim}`, 'g');
         txt = txt.replace(keyRegex, value);
     }
     fs.writeFileSync(outputFile, txt, {flag: 'w'})
+    return true;
 }
 
 let escape = (text: string): string => {
