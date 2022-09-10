@@ -74,17 +74,25 @@ export async function run(input: Inputs) {
     let owner = context.repo.owner;
     let repo = context.repo.repo;
 
-    octokit.git.createCommit({
+    const currentCommit = await octokit.git.getCommit({
+        owner,
+        repo,
+        commit_sha: context.sha,
+    });
+    let newCommit = await octokit.git.createCommit({
         owner,
         repo,
         message: 'initial',
-        tree: context.sha,
-        author: {
-            name: sender?.name ?? 'github-actions[bot]',
-            email: sender?.email ?? 'github-actions[bot]@users.noreply.github.com',
-        }
+        tree: currentCommit.data.tree.sha,
+        parents: [currentCommit.data.sha],
     });
 
+    await octokit.git.updateRef({
+        owner,
+        repo,
+        ref: context.ref,
+        sha: newCommit.data.sha,
+    });
 }
 
 let templateFile = (inputFile: string, outputFile: string, leftDelim: string, rightDelim: string, jsonObject: any = {}) => {
