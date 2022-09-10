@@ -2,7 +2,7 @@ jest.mock('@actions/core');
 jest.mock('@actions/github');
 jest.mock('fs');
 
-import core from '@actions/core';
+import * as core from '@actions/core';
 import {when} from 'jest-when';
 import {run} from './core';
 
@@ -20,6 +20,7 @@ describe('action env [core.js] test', () => {
         when(getInputFn).calledWith('overflow_readme_file').mockReturnValue(undefined);
         when(getInputFn).calledWith('env_file').mockReturnValue(undefined);
         when(getInputFn).calledWith('env').mockReturnValue('key=value,key2=value2');
+        // core.getInput = getInputFn;
         console.log('getInputFn', core);
         await run({
             left_delim: '<<[',
