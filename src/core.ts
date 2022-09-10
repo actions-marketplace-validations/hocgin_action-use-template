@@ -68,11 +68,12 @@ export async function run(input: Inputs) {
         }
     }
 
+    let basePathLength = `${baseDir}/`.length;
     let changeFiles = [];
     for (let file of files) {
         let isChanged = templateFile(file, file, leftDelim, rightDelim, envObject);
         if (isChanged) {
-            changeFiles.push(file.substring(`${baseDir}/`.length));
+            changeFiles.push(file.substring(basePathLength));
         }
     }
 
