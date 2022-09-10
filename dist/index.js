@@ -996,7 +996,7 @@ const fs = __importStar(__webpack_require__(747));
 const path = __importStar(__webpack_require__(622));
 const glob_1 = __webpack_require__(402);
 function run(input) {
-    var _a, _b, _c, _d, _e, _f, _g;
+    var _a, _b, _c, _d, _e;
     return __awaiter(this, void 0, void 0, function* () {
         const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
         let context = github.context;
@@ -1050,15 +1050,23 @@ function run(input) {
         }
         let owner = context.repo.owner;
         let repo = context.repo.repo;
-        octokit.git.createCommit({
+        const currentCommit = yield octokit.git.getCommit({
+            owner,
+            repo,
+            commit_sha: context.sha,
+        });
+        let newCommit = yield octokit.git.createCommit({
             owner,
             repo,
             message: 'initial',
-            tree: context.sha,
-            author: {
-                name: (_f = sender === null || sender === void 0 ? void 0 : sender.name) !== null && _f !== void 0 ? _f : 'github-actions[bot]',
-                email: (_g = sender === null || sender === void 0 ? void 0 : sender.email) !== null && _g !== void 0 ? _g : 'github-actions[bot]@users.noreply.github.com',
-            }
+            tree: currentCommit.data.tree.sha,
+            parents: [currentCommit.data.sha],
+        });
+        yield octokit.git.updateRef({
+            owner,
+            repo,
+            ref: context.ref,
+            sha: newCommit.data.sha,
         });
     });
 }
