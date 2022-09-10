@@ -83,7 +83,7 @@ export async function run(input: Inputs) {
     let newCommit = await octokit.git.createCommit({
         owner,
         repo,
-        message: 'initial',
+        message: 'update template variables',
         tree: currentCommit.data.tree.sha,
         parents: [currentCommit.data.sha],
     });
@@ -91,13 +91,14 @@ export async function run(input: Inputs) {
     await octokit.git.updateRef({
         owner,
         repo,
-        ref: context.ref.substring(5),
+        ref: context.ref.substring('refs/'.length),
         sha: newCommit.data.sha,
         force: true
     });
 }
 
 let templateFile = (inputFile: string, outputFile: string, leftDelim: string, rightDelim: string, jsonObject: any = {}) => {
+    console.log(`template file: ${inputFile}, output file: ${outputFile}`);
     if (!fs.existsSync(inputFile)) {
         return;
     }
