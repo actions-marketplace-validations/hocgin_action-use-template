@@ -79,6 +79,7 @@ export async function run(input: Inputs) {
         repo,
         commit_sha: context.sha,
     });
+
     let newCommit = await octokit.git.createCommit({
         owner,
         repo,
@@ -86,13 +87,13 @@ export async function run(input: Inputs) {
         tree: currentCommit.data.tree.sha,
         parents: [currentCommit.data.sha],
     });
-    console.log('context.ref', context.ref);
 
     await octokit.git.updateRef({
         owner,
         repo,
-        ref: context.ref,
+        ref: context.ref.substring(5),
         sha: newCommit.data.sha,
+        force: true
     });
 }
 
