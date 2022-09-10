@@ -905,9 +905,22 @@ exports.debug = debug; // for test
 
 "use strict";
 
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = __webpack_require__(238);
-(0, core_1.run)();
+const core_2 = __importDefault(__webpack_require__(470));
+let getInput = () => ({
+    left_delim: core_2.default.getInput('left_delim'),
+    right_delim: core_2.default.getInput('right_delim'),
+    path: core_2.default.getInput('path'),
+    excludes: core_2.default.getInput('excludes'),
+    overflow_readme_file: core_2.default.getInput('overflow_readme_file'),
+    env_file: core_2.default.getInput('env_file'),
+    env: core_2.default.getInput('env'),
+});
+(0, core_1.run)(getInput());
 
 
 /***/ }),
@@ -956,26 +969,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.run = void 0;
-const core_1 = __importDefault(__webpack_require__(470));
 const github_1 = __importStar(__webpack_require__(469));
 const fs = __importStar(__webpack_require__(747));
 const path = __importStar(__webpack_require__(622));
 const glob_1 = __webpack_require__(402);
-let getInput = () => ({
-    left_delim: core_1.default.getInput('left_delim'),
-    right_delim: core_1.default.getInput('right_delim'),
-    path: core_1.default.getInput('path'),
-    excludes: core_1.default.getInput('excludes'),
-    overflow_readme_file: core_1.default.getInput('overflow_readme_file'),
-    env_file: core_1.default.getInput('env_file'),
-    env: core_1.default.getInput('env'),
-});
-function run() {
+function run(input) {
     var _a, _b, _c, _d, _e, _f, _g;
     return __awaiter(this, void 0, void 0, function* () {
         const octokit = (0, github_1.getOctokit)(process.env.GITHUB_TOKEN);
@@ -984,7 +984,6 @@ function run() {
         let repository_full_name = (_b = context.payload.repository) === null || _b === void 0 ? void 0 : _b.full_name;
         let repository_html_url = (_c = context.payload.repository) === null || _c === void 0 ? void 0 : _c.html_url;
         let git_ref = context.ref;
-        let input = getInput();
         let envFile = input.env_file;
         let leftDelim = input.left_delim;
         let rightDelim = input.right_delim;
