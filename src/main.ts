@@ -1,5 +1,5 @@
 import {run} from "./core";
-import core from "@actions/core";
+import * as core from "@actions/core";
 
 export interface Inputs {
     path: string;
