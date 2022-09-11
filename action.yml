@@ -14,12 +14,14 @@ inputs:
     required: true
     default: '**/*'
     description: '作用文件或目录'
-  excludes:
+  exclude:
     description: '忽略文件或目录(,分隔)'
+  exclude_file:
+    description: '忽略文件或目录的变量路径'
   overflow_readme_file:
     description: '覆盖 README.md 的文件路径'
   env_file:
-    description: '替换的变量文件路径(JSON格式)'
+    description: '替换的变量文件路径'
   env:
     description: '替换的变量列表: key=value,key2=value2'
 #outputs:

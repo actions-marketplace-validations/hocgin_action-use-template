@@ -21,12 +21,18 @@ export async function run(input: Inputs) {
     let rightDelim = input.right_delim;
     let env = input.env;
     let overflowReadmeFile = input.overflow_readme_file;
-    let excludes = (input.excludes ?? '').split(',').map((value) => value.trim());
-    let sender;
+    let excludes: string[] = [];
+
+    if (input.exclude) {
+        excludes = [...excludes, ...`${input.exclude}`.split(',').map((value) => value.trim())]
+    }
+
+    if (input.exclude_file) {
+        excludes = [...excludes, ...getExcludesByFile(input.exclude_file)]
+    }
 
     if (context.eventName === 'created') {
         const payload = context.payload as RepositoryCreatedEvent;
-        sender = payload.sender;
         payload.repository.master_branch;
     }
 
@@ -47,12 +53,9 @@ export async function run(input: Inputs) {
         repository_html_url,
         git_ref
     };
+
     if (envFile) {
-        let file = path.resolve(baseDir, envFile);
-        if (!fs.existsSync(file)) {
-            throw new Error('input [`env_file`] not found');
-        }
-        let envFileJson = JSON.parse(fs.readFileSync(file) as any) ?? {};
+        let envFileJson = getEnvByFile(path.resolve(baseDir, envFile));
         envObject = {
             ...envObject,
             ...envFileJson
@@ -116,6 +119,28 @@ export async function run(input: Inputs) {
         sha: newCommit.data.sha,
         force: true
     });
+}
+
+export function getExcludesByFile(file: string): string[] {
+    if (!fs.existsSync(file)) {
+        throw new Error('input [`exclude_file`] not found');
+    }
+    let text: string = fs.readFileSync(file) as any;
+    return text.split('\n').map((value) => value.trim()).filter(value => value && value.length > 0);
+}
+
+export function getEnvByFile(file: string): any {
+    if (!fs.existsSync(file)) {
+        throw new Error('input [`env_file`] not found');
+    }
+    let text: string = fs.readFileSync(file) as any;
+    let result: any = {};
+
+    text.split('\n').filter(line => `${line}`.indexOf('=') > 0).forEach((line) => {
+        let keyValue = line.split('=', 2);
+        result[keyValue[0]] = keyValue[1];
+    });
+    return result;
 }
 
 let templateFile = (inputFile: string, outputFile: string, leftDelim: string, rightDelim: string, jsonObject: any = {}): boolean => {
