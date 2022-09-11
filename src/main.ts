@@ -23,4 +23,8 @@ let getInput = (): Inputs => ({
     env: core.getInput('env'),
 })
 
-run(getInput());
+try {
+    run(getInput())
+} catch (error: any) {
+    core.setFailed(error?.message);
+}
