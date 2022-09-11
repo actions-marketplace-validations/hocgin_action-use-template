@@ -941,7 +941,12 @@ let getInput = () => ({
     env_file: core.getInput('env_file'),
     env: core.getInput('env'),
 });
-(0, core_1.run)(getInput());
+try {
+    (0, core_1.run)(getInput());
+}
+catch (error) {
+    core.setFailed(error === null || error === void 0 ? void 0 : error.message);
+}
 
 
 /***/ }),
