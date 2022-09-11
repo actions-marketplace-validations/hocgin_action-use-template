@@ -68,6 +68,7 @@ export async function run(input: Inputs) {
         }
     }
 
+    console.log('变量参数: ', envObject);
     let basePathLength = `${baseDir}/`.length;
     let changeFiles = [];
     for (let file of files) {
@@ -76,6 +77,7 @@ export async function run(input: Inputs) {
             changeFiles.push(file.substring(basePathLength));
         }
     }
+    console.log('变更的文件列表: ', changeFiles);
 
     let owner = context.repo.owner;
     let repo = context.repo.repo;
