@@ -997,7 +997,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.renameDir = exports.getMatchesDir = exports.getMatchesFile = exports.getEnvByFile = exports.getExcludesByFile = exports.run = void 0;
+exports.renameDir = exports.getMatchesDir = exports.getMatchesFile = exports.templateFile = exports.getEnvByFile = exports.getExcludesByFile = exports.run = void 0;
 const github = __importStar(__webpack_require__(469));
 const fs = __importStar(__webpack_require__(747));
 const path = __importStar(__webpack_require__(622));
@@ -1064,7 +1064,7 @@ function run(input) {
         let basePathLength = `${baseDir}/`.length;
         let changeFiles = [];
         for (let file of files) {
-            let isChanged = templateFile(file, file, leftDelim, rightDelim, envObject);
+            let isChanged = (0, exports.templateFile)(file, file, leftDelim, rightDelim, envObject);
             if (isChanged) {
                 changeFiles.push(file.substring(basePathLength));
             }
@@ -1137,28 +1137,30 @@ function getEnvByFile(file) {
 exports.getEnvByFile = getEnvByFile;
 let templateFile = (inputFile, outputFile, leftDelim, rightDelim, jsonObject = {}) => {
     var _a;
-    debugPrintf(`替换过程: 替换前文件=${inputFile}, 替换后文件=${outputFile}`);
-    if (!fs.existsSync(inputFile)) {
-        return false;
+    let isChanged = false;
+    if (fs.existsSync(inputFile)) {
+        leftDelim = escape(leftDelim);
+        rightDelim = escape(rightDelim);
+        let data = String(fs.readFileSync(inputFile));
+        if (data) {
+            let keys = ((_a = Object.keys(jsonObject)) !== null && _a !== void 0 ? _a : []).filter(v => `${v}`.length > 0);
+            let txt = data;
+            let includeKey = keys.findIndex((key) => new RegExp(`${leftDelim}\\s${key}\\s${rightDelim}`).test(txt)) >= 0;
+            if (includeKey) {
+                for (let key of keys) {
+                    let value = jsonObject[key];
+                    let keyRegex = new RegExp(`${leftDelim}\\s${key}\\s${rightDelim}`, 'g');
+                    txt = txt.replace(keyRegex, value);
+                }
+                fs.writeFileSync(outputFile, txt, { flag: 'w' });
+                isChanged = true;
+            }
+        }
     }
-    leftDelim = escape(leftDelim);
-    rightDelim = escape(rightDelim);
-    let keys = (_a = Object.keys(jsonObject)) !== null && _a !== void 0 ? _a : [];
-    let data = String(fs.readFileSync(inputFile));
-    if (!data) {
-        return false;
-    }
-    let txt = String(data);
-    for (let key of keys) {
-        if (!key)
-            return false;
-        let value = jsonObject[key];
-        let keyRegex = new RegExp(`${leftDelim}\s${key}\s${rightDelim}`, 'g');
-        txt = txt.replace(keyRegex, value);
-    }
-    fs.writeFileSync(outputFile, txt, { flag: 'w' });
-    return true;
+    debugPrintf(`替换过程: 是否进行=${isChanged ? '是' : '否'}, 替换前文件=${inputFile}, 替换后文件=${outputFile}`);
+    return isChanged;
 };
+exports.templateFile = templateFile;
 let escape = (text) => {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 };
