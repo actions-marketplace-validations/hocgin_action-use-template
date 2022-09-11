@@ -161,30 +161,30 @@ export function getEnvByFile(file: string): any {
     return result;
 }
 
-let templateFile = (inputFile: string, outputFile: string, leftDelim: string, rightDelim: string, jsonObject: any = {}): boolean => {
-    debugPrintf(`替换过程: 替换前文件=${inputFile}, 替换后文件=${outputFile}`);
-    if (!fs.existsSync(inputFile)) {
-        return false;
-    }
-    leftDelim = escape(leftDelim);
-    rightDelim = escape(rightDelim);
+export let templateFile = (inputFile: string, outputFile: string, leftDelim: string, rightDelim: string, jsonObject: any = {}): boolean => {
+    let isChanged = false;
+    if (fs.existsSync(inputFile)) {
+        leftDelim = escape(leftDelim);
+        rightDelim = escape(rightDelim);
 
-    let keys = Object.keys(jsonObject) ?? [];
-    let data = String(fs.readFileSync(inputFile));
-
-    if (!data) {
-        return false;
+        let data = String(fs.readFileSync(inputFile));
+        if (data) {
+            let keys = (Object.keys(jsonObject) ?? []).filter(v => `${v}`.length > 0);
+            let txt: string = data;
+            let includeKey = keys.findIndex((key) => new RegExp(`${leftDelim}\\s${key}\\s${rightDelim}`).test(txt)) >= 0;
+            if (includeKey) {
+                for (let key of keys) {
+                    let value = jsonObject[key];
+                    let keyRegex = new RegExp(`${leftDelim}\\s${key}\\s${rightDelim}`, 'g');
+                    txt = txt.replace(keyRegex, value);
+                }
+                fs.writeFileSync(outputFile, txt, {flag: 'w'});
+                isChanged = true
+            }
+        }
     }
-    let txt: string = String(data);
-
-    for (let key of keys) {
-        if (!key) return false;
-        let value = jsonObject[key];
-        let keyRegex = new RegExp(`${leftDelim}\s${key}\s${rightDelim}`, 'g');
-        txt = txt.replace(keyRegex, value);
-    }
-    fs.writeFileSync(outputFile, txt, {flag: 'w'})
-    return true;
+    debugPrintf(`替换过程: 是否进行=${isChanged ? '是' : '否'}, 替换前文件=${inputFile}, 替换后文件=${outputFile}`);
+    return isChanged;
 }
 
 let escape = (text: string): string => {

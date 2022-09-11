@@ -5,7 +5,7 @@ jest.mock('@actions/github');
 
 import * as core from '@actions/core';
 import {when} from 'jest-when';
-import {getEnvByFile, getExcludesByFile, getMatchesDir, getMatchesFile, renameDir, run} from './core';
+import {getEnvByFile, getExcludesByFile, getMatchesDir, getMatchesFile, renameDir, run, templateFile} from './core';
 import * as fs from "fs";
 import {glob} from "glob";
 
@@ -80,5 +80,11 @@ describe('action env [core.js] test', () => {
         let list = getMatchesDir(`${baseDir}/**/*`, excludesFiles, ['key1']);
         renameDir(list, {key1: 'value1', key2: 'value2'})
         console.log('list', list);
+    });
+
+    test('test.templateFile', () => {
+        let input_file = path.resolve(__dirname, '../__test__/test.md');
+        let out_file = path.resolve(__dirname, '../__test__/test.md');
+        templateFile(input_file, out_file, '<<[', ']>>', {author: 'hocgin'});
     });
 });
