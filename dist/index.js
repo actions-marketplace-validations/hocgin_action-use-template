@@ -935,7 +935,8 @@ let getInput = () => ({
     left_delim: core.getInput('left_delim'),
     right_delim: core.getInput('right_delim'),
     path: core.getInput('path'),
-    excludes: core.getInput('excludes'),
+    exclude: core.getInput('exclude'),
+    exclude_file: core.getInput('exclude_file'),
     overflow_readme_file: core.getInput('overflow_readme_file'),
     env_file: core.getInput('env_file'),
     env: core.getInput('env'),
@@ -990,13 +991,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.run = void 0;
+exports.getEnvByFile = exports.getExcludesByFile = exports.run = void 0;
 const github = __importStar(__webpack_require__(469));
 const fs = __importStar(__webpack_require__(747));
 const path = __importStar(__webpack_require__(622));
 const glob_1 = __webpack_require__(402);
 function run(input) {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
         let context = github.context;
@@ -1009,11 +1010,15 @@ function run(input) {
         let rightDelim = input.right_delim;
         let env = input.env;
         let overflowReadmeFile = input.overflow_readme_file;
-        let excludes = ((_d = input.excludes) !== null && _d !== void 0 ? _d : '').split(',').map((value) => value.trim());
-        let sender;
+        let excludes = [];
+        if (input.exclude) {
+            excludes = [...excludes, ...`${input.exclude}`.split(',').map((value) => value.trim())];
+        }
+        if (input.exclude_file) {
+            excludes = [...excludes, ...getExcludesByFile(input.exclude_file)];
+        }
         if (context.eventName === 'created') {
             const payload = context.payload;
-            sender = payload.sender;
             payload.repository.master_branch;
         }
         const baseDir = path.resolve(process.cwd());
@@ -1032,11 +1037,7 @@ function run(input) {
             git_ref
         };
         if (envFile) {
-            let file = path.resolve(baseDir, envFile);
-            if (!fs.existsSync(file)) {
-                throw new Error('input [`env_file`] not found');
-            }
-            let envFileJson = (_e = JSON.parse(fs.readFileSync(file))) !== null && _e !== void 0 ? _e : {};
+            let envFileJson = getEnvByFile(path.resolve(baseDir, envFile));
             envObject = Object.assign(Object.assign({}, envObject), envFileJson);
         }
         if (env && env.indexOf('=') > 0) {
@@ -1090,6 +1091,27 @@ function run(input) {
     });
 }
 exports.run = run;
+function getExcludesByFile(file) {
+    if (!fs.existsSync(file)) {
+        throw new Error('input [`exclude_file`] not found');
+    }
+    let text = fs.readFileSync(file);
+    return text.split('\n').map((value) => value.trim()).filter(value => value && value.length > 0);
+}
+exports.getExcludesByFile = getExcludesByFile;
+function getEnvByFile(file) {
+    if (!fs.existsSync(file)) {
+        throw new Error('input [`env_file`] not found');
+    }
+    let text = fs.readFileSync(file);
+    let result = {};
+    text.split('\n').filter(line => `${line}`.indexOf('=') > 0).forEach((line) => {
+        let keyValue = line.split('=', 2);
+        result[keyValue[0]] = keyValue[1];
+    });
+    return result;
+}
+exports.getEnvByFile = getEnvByFile;
 let templateFile = (inputFile, outputFile, leftDelim, rightDelim, jsonObject = {}) => {
     var _a;
     console.log(`template file: ${inputFile}, output file: ${outputFile}`);
