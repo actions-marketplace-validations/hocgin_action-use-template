@@ -1045,6 +1045,7 @@ function run(input) {
                 .filter(value => value.length === 2).forEach(value => envJson[value[0]] = value[1]);
             envObject = Object.assign(Object.assign({}, envObject), envJson);
         }
+        console.log('变量参数: ', envObject);
         let basePathLength = `${baseDir}/`.length;
         let changeFiles = [];
         for (let file of files) {
@@ -1053,6 +1054,7 @@ function run(input) {
                 changeFiles.push(file.substring(basePathLength));
             }
         }
+        console.log('变更的文件列表: ', changeFiles);
         let owner = context.repo.owner;
         let repo = context.repo.repo;
         const currentCommit = yield octokit.git.getCommit({
