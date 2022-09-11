@@ -940,6 +940,7 @@ let getInput = () => ({
     overflow_readme_file: core.getInput('overflow_readme_file'),
     env_file: core.getInput('env_file'),
     env: core.getInput('env'),
+    debug: core.getInput('debug') === 'true'
 });
 try {
     (0, core_1.run)(getInput());
@@ -1001,6 +1002,8 @@ const github = __importStar(__webpack_require__(469));
 const fs = __importStar(__webpack_require__(747));
 const path = __importStar(__webpack_require__(622));
 const glob_1 = __webpack_require__(402);
+let debugPrintf = (...args) => {
+};
 function run(input) {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
@@ -1010,6 +1013,7 @@ function run(input) {
         let repository_full_name = (_b = context.payload.repository) === null || _b === void 0 ? void 0 : _b.full_name;
         let repository_html_url = (_c = context.payload.repository) === null || _c === void 0 ? void 0 : _c.html_url;
         let git_ref = context.ref;
+        debugPrintf = input.debug ? console.log : debugPrintf;
         let envFile = input.env_file;
         let leftDelim = input.left_delim;
         let rightDelim = input.right_delim;
@@ -1017,6 +1021,7 @@ function run(input) {
         let overflowReadmeFile = input.overflow_readme_file;
         let excludes = [];
         const baseDir = path.resolve(process.cwd());
+        debugPrintf('==> 工作目录', baseDir);
         if (input.exclude) {
             let exclude = `${input.exclude}`.split(',').map((value) => value.trim()).map(v => path.join(baseDir, v));
             excludes = [...excludes, ...exclude];
@@ -1030,11 +1035,10 @@ function run(input) {
             let exclude = getExcludesByFile(excludeFile).map(v => path.join(excludeDir, v));
             excludes = [...excludes, ...exclude];
         }
-        if (context.eventName === 'created') {
-            const payload = context.payload;
-            payload.repository.master_branch;
-        }
-        let files = (0, exports.getMatchesFile)(`${baseDir}/${input.path}`, excludes);
+        let scanDir = `${baseDir}/${input.path}`;
+        debugPrintf('==> 扫描目录', scanDir);
+        debugPrintf('==> 过滤文件或目录', excludes);
+        let files = (0, exports.getMatchesFile)(scanDir, excludes);
         if (overflowReadmeFile && fs.existsSync(overflowReadmeFile)) {
             let data = String(fs.readFileSync(overflowReadmeFile));
             fs.writeFileSync(data, path.resolve(baseDir, 'README.md'), { flag: 'w' });
@@ -1055,7 +1059,8 @@ function run(input) {
                 .filter(value => value.length === 2).forEach(value => envJson[value[0]] = value[1]);
             envObject = Object.assign(Object.assign({}, envObject), envJson);
         }
-        let dirList = (0, exports.getMatchesDir)(`${baseDir}/${input.path}`, excludes, Object.keys(envObject));
+        debugPrintf('==> 替换变量', envObject);
+        // let dirList = getMatchesDir(`${baseDir}/${input.path}`, excludes, Object.keys(envObject));
         let basePathLength = `${baseDir}/`.length;
         let changeFiles = [];
         for (let file of files) {
@@ -1072,9 +1077,10 @@ function run(input) {
         let owner = context.repo.owner;
         let repo = context.repo.repo;
         if (changeFiles.length === 0 && changeDirs.length === 0) {
-            console.log('no change');
+            console.log('no change no commit');
             return;
         }
+        debugPrintf('==> change files', changeFiles);
         const currentCommit = yield octokit.git.getCommit({
             owner,
             repo,
@@ -1131,7 +1137,7 @@ function getEnvByFile(file) {
 exports.getEnvByFile = getEnvByFile;
 let templateFile = (inputFile, outputFile, leftDelim, rightDelim, jsonObject = {}) => {
     var _a;
-    console.log(`template file: ${inputFile}, output file: ${outputFile}`);
+    debugPrintf(`替换过程: 替换前文件=${inputFile}, 替换后文件=${outputFile}`);
     if (!fs.existsSync(inputFile)) {
         return false;
     }
