@@ -45,6 +45,7 @@ export async function run(input: Inputs) {
     }
 
     let files = getMatchesFile(`${baseDir}/${input.path}`, excludes);
+
     if (overflowReadmeFile && fs.existsSync(overflowReadmeFile)) {
         let data = String(fs.readFileSync(overflowReadmeFile));
         fs.writeFileSync(data, path.resolve(baseDir, 'README.md'), {flag: 'w'});
@@ -73,6 +74,7 @@ export async function run(input: Inputs) {
             ...envJson
         }
     }
+    let dirList = getMatchesDir(`${baseDir}/${input.path}`, excludes, Object.keys(envObject));
 
     let basePathLength = `${baseDir}/`.length;
     let changeFiles = [];
@@ -81,6 +83,10 @@ export async function run(input: Inputs) {
         if (isChanged) {
             changeFiles.push(file.substring(basePathLength));
         }
+    }
+
+    if (dirList.length > 0) {
+        renameDir(dirList, envObject);
     }
 
     let owner = context.repo.owner;
@@ -179,5 +185,64 @@ export let getMatchesFile = (root: string, ignoreFile: string[]): string[] => {
     return glob.sync(`${root}`, {
         nodir: true,
         ignore: ignoreFile
+    });
+};
+
+export let getMatchesDir = (root: string, ignoreFile: string[], keys: string[] = []): string[] => {
+    let files = glob.sync(`${root}`, {
+        nodir: false,
+        ignore: ignoreFile
+    });
+    return files.filter(v => {
+        let stats = fs.lstatSync(v);
+        let filename = path.basename(v);
+        return stats.isDirectory() && /__.*?__/.test(`${filename}`) && keys.find(((key) => filename === `__${key}__`))
+    });
+};
+
+type ReItemType = { from: string, to: string };
+export let renameDir = (listDir: string[], jsonObject: any = {}) => {
+    listDir = listDir.sort((a, b) => b.length - a.length);
+
+    let relist: ReItemType[] = [];
+    let keys = Object.keys(jsonObject);
+    let handle = (dirname: string) => {
+        let txt = dirname;
+        for (let key of keys) {
+            let value = jsonObject[key];
+            let keyRegex = new RegExp(`__${key}__`, 'g');
+            txt = txt.replace(keyRegex, value);
+        }
+        return txt;
+    };
+
+
+    for (let dir of listDir) {
+        relist.push({from: dir, to: handle(`${dir}`)})
+    }
+    return relist.forEach(({from, to}) => {
+        let fromPath = path.resolve(from);
+        let toPath = path.resolve(to);
+
+        let retask: { base: string, from: string, to: string }[] = [];
+
+        // 向顶层查找
+        while (!fs.existsSync(toPath)) {
+            retask.push({
+                base: path.resolve(toPath, '..'),
+                from: path.basename(fromPath),
+                to: path.basename(toPath),
+            });
+            fromPath = path.resolve(fromPath, '..');
+            toPath = path.resolve(toPath, '..');
+        }
+
+        // 向底层查找
+        while (retask.length > 0) {
+            let task = retask.pop();
+            if (task) {
+                fs.renameSync(path.resolve(task.base, task.from), path.resolve(task.base, task.to));
+            }
+        }
     });
 };
