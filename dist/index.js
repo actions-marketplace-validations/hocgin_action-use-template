@@ -1064,11 +1064,17 @@ function run(input) {
                 changeFiles.push(file.substring(basePathLength));
             }
         }
-        if (dirList.length > 0) {
-            (0, exports.renameDir)(dirList, envObject);
-        }
+        let changeDirs = [];
+        // todo: 暂时不支持文件夹变量
+        // if (dirList.length > 0) {
+        //    changeDirs = renameDir(dirList, envObject);
+        // }
         let owner = context.repo.owner;
         let repo = context.repo.repo;
+        if (changeFiles.length === 0 && changeDirs.length === 0) {
+            console.log('no change');
+            return;
+        }
         const currentCommit = yield octokit.git.getCommit({
             owner,
             repo,
@@ -1186,7 +1192,7 @@ let renameDir = (listDir, jsonObject = {}) => {
     for (let dir of listDir) {
         relist.push({ from: dir, to: handle(`${dir}`) });
     }
-    return relist.forEach(({ from, to }) => {
+    relist.forEach(({ from, to }) => {
         let fromPath = path.resolve(from);
         let toPath = path.resolve(to);
         let retask = [];
@@ -1208,6 +1214,7 @@ let renameDir = (listDir, jsonObject = {}) => {
             }
         }
     });
+    return relist;
 };
 exports.renameDir = renameDir;
 
