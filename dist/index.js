@@ -991,7 +991,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getEnvByFile = exports.getExcludesByFile = exports.run = void 0;
+exports.getMatchesFile = exports.getEnvByFile = exports.getExcludesByFile = exports.run = void 0;
 const github = __importStar(__webpack_require__(469));
 const fs = __importStar(__webpack_require__(747));
 const path = __importStar(__webpack_require__(622));
@@ -1011,23 +1011,27 @@ function run(input) {
         let env = input.env;
         let overflowReadmeFile = input.overflow_readme_file;
         let excludes = [];
+        const baseDir = path.resolve(process.cwd());
         if (input.exclude) {
-            excludes = [...excludes, ...`${input.exclude}`.split(',').map((value) => value.trim())];
+            let exclude = `${input.exclude}`.split(',').map((value) => value.trim()).map(v => path.join(baseDir, v));
+            excludes = [...excludes, ...exclude];
         }
-        if (input.exclude_file) {
-            excludes = [...excludes, ...getExcludesByFile(input.exclude_file)];
+        let excludeFile = input.exclude_file;
+        if (excludeFile) {
+            if (!fs.existsSync(excludeFile)) {
+                throw new Error('input [`exclude_file`] not found');
+            }
+            let excludeDir = path.resolve(excludeFile, '..');
+            let exclude = getExcludesByFile(excludeFile).map(v => path.join(excludeDir, v));
+            excludes = [...excludes, ...exclude];
         }
         if (context.eventName === 'created') {
             const payload = context.payload;
             payload.repository.master_branch;
         }
-        const baseDir = path.resolve(process.cwd());
-        let files = glob_1.glob.sync(`${baseDir}/${input.path}`, {
-            nodir: true,
-            ignore: excludes.map((value) => path.join(baseDir, value))
-        });
+        let files = (0, exports.getMatchesFile)(`${baseDir}/${input.path}`, excludes);
         if (overflowReadmeFile && fs.existsSync(overflowReadmeFile)) {
-            let data = fs.readFileSync(overflowReadmeFile);
+            let data = String(fs.readFileSync(overflowReadmeFile));
             fs.writeFileSync(data, path.resolve(baseDir, 'README.md'), { flag: 'w' });
         }
         let envObject = {
@@ -1046,7 +1050,6 @@ function run(input) {
                 .filter(value => value.length === 2).forEach(value => envJson[value[0]] = value[1]);
             envObject = Object.assign(Object.assign({}, envObject), envJson);
         }
-        console.log('变量参数: ', envObject);
         let basePathLength = `${baseDir}/`.length;
         let changeFiles = [];
         for (let file of files) {
@@ -1055,7 +1058,6 @@ function run(input) {
                 changeFiles.push(file.substring(basePathLength));
             }
         }
-        console.log('变更的文件列表: ', changeFiles);
         let owner = context.repo.owner;
         let repo = context.repo.repo;
         const currentCommit = yield octokit.git.getCommit({
@@ -1095,7 +1097,7 @@ function getExcludesByFile(file) {
     if (!fs.existsSync(file)) {
         throw new Error('input [`exclude_file`] not found');
     }
-    let text = fs.readFileSync(file);
+    let text = String(fs.readFileSync(file));
     return text.split('\n').map((value) => value.trim()).filter(value => value && value.length > 0);
 }
 exports.getExcludesByFile = getExcludesByFile;
@@ -1103,7 +1105,7 @@ function getEnvByFile(file) {
     if (!fs.existsSync(file)) {
         throw new Error('input [`env_file`] not found');
     }
-    let text = fs.readFileSync(file);
+    let text = String(fs.readFileSync(file));
     let result = {};
     text.split('\n').filter(line => `${line}`.indexOf('=') > 0).forEach((line) => {
         let keyValue = line.split('=', 2);
@@ -1121,7 +1123,7 @@ let templateFile = (inputFile, outputFile, leftDelim, rightDelim, jsonObject = {
     leftDelim = escape(leftDelim);
     rightDelim = escape(rightDelim);
     let keys = (_a = Object.keys(jsonObject)) !== null && _a !== void 0 ? _a : [];
-    let data = fs.readFileSync(inputFile);
+    let data = String(fs.readFileSync(inputFile));
     if (!data) {
         return false;
     }
@@ -1139,6 +1141,14 @@ let templateFile = (inputFile, outputFile, leftDelim, rightDelim, jsonObject = {
 let escape = (text) => {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 };
+let getMatchesFile = (root, ignoreFile) => {
+    // let ignoreFile = ignore.map((value) => path.join(base, value));
+    return glob_1.glob.sync(`${root}`, {
+        nodir: true,
+        ignore: ignoreFile
+    });
+};
+exports.getMatchesFile = getMatchesFile;
 
 
 /***/ }),
