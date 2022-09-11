@@ -85,12 +85,19 @@ export async function run(input: Inputs) {
         }
     }
 
-    if (dirList.length > 0) {
-        renameDir(dirList, envObject);
-    }
+    let changeDirs = [];
+    // todo: 暂时不支持文件夹变量
+    // if (dirList.length > 0) {
+    //    changeDirs = renameDir(dirList, envObject);
+    // }
 
     let owner = context.repo.owner;
     let repo = context.repo.repo;
+
+    if (changeFiles.length === 0 && changeDirs.length === 0) {
+        console.log('no change')
+        return;
+    }
 
     const currentCommit = await octokit.git.getCommit({
         owner,
@@ -201,7 +208,7 @@ export let getMatchesDir = (root: string, ignoreFile: string[], keys: string[] =
 };
 
 type ReItemType = { from: string, to: string };
-export let renameDir = (listDir: string[], jsonObject: any = {}) => {
+export let renameDir = (listDir: string[], jsonObject: any = {}): ReItemType[] => {
     listDir = listDir.sort((a, b) => b.length - a.length);
 
     let relist: ReItemType[] = [];
@@ -220,7 +227,7 @@ export let renameDir = (listDir: string[], jsonObject: any = {}) => {
     for (let dir of listDir) {
         relist.push({from: dir, to: handle(`${dir}`)})
     }
-    return relist.forEach(({from, to}) => {
+    relist.forEach(({from, to}) => {
         let fromPath = path.resolve(from);
         let toPath = path.resolve(to);
 
@@ -245,4 +252,5 @@ export let renameDir = (listDir: string[], jsonObject: any = {}) => {
             }
         }
     });
+    return relist;
 };
