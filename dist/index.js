@@ -991,7 +991,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMatchesFile = exports.getEnvByFile = exports.getExcludesByFile = exports.run = void 0;
+exports.renameDir = exports.getMatchesDir = exports.getMatchesFile = exports.getEnvByFile = exports.getExcludesByFile = exports.run = void 0;
 const github = __importStar(__webpack_require__(469));
 const fs = __importStar(__webpack_require__(747));
 const path = __importStar(__webpack_require__(622));
@@ -1050,6 +1050,7 @@ function run(input) {
                 .filter(value => value.length === 2).forEach(value => envJson[value[0]] = value[1]);
             envObject = Object.assign(Object.assign({}, envObject), envJson);
         }
+        let dirList = (0, exports.getMatchesDir)(`${baseDir}/${input.path}`, excludes, Object.keys(envObject));
         let basePathLength = `${baseDir}/`.length;
         let changeFiles = [];
         for (let file of files) {
@@ -1057,6 +1058,9 @@ function run(input) {
             if (isChanged) {
                 changeFiles.push(file.substring(basePathLength));
             }
+        }
+        if (dirList.length > 0) {
+            (0, exports.renameDir)(dirList, envObject);
         }
         let owner = context.repo.owner;
         let repo = context.repo.repo;
@@ -1149,6 +1153,58 @@ let getMatchesFile = (root, ignoreFile) => {
     });
 };
 exports.getMatchesFile = getMatchesFile;
+let getMatchesDir = (root, ignoreFile, keys = []) => {
+    let files = glob_1.glob.sync(`${root}`, {
+        nodir: false,
+        ignore: ignoreFile
+    });
+    return files.filter(v => {
+        let stats = fs.lstatSync(v);
+        let filename = path.basename(v);
+        return stats.isDirectory() && /__.*?__/.test(`${filename}`) && keys.find(((key) => filename === `__${key}__`));
+    });
+};
+exports.getMatchesDir = getMatchesDir;
+let renameDir = (listDir, jsonObject = {}) => {
+    listDir = listDir.sort((a, b) => b.length - a.length);
+    let relist = [];
+    let keys = Object.keys(jsonObject);
+    let handle = (dirname) => {
+        let txt = dirname;
+        for (let key of keys) {
+            let value = jsonObject[key];
+            let keyRegex = new RegExp(`__${key}__`, 'g');
+            txt = txt.replace(keyRegex, value);
+        }
+        return txt;
+    };
+    for (let dir of listDir) {
+        relist.push({ from: dir, to: handle(`${dir}`) });
+    }
+    return relist.forEach(({ from, to }) => {
+        let fromPath = path.resolve(from);
+        let toPath = path.resolve(to);
+        let retask = [];
+        // 向顶层查找
+        while (!fs.existsSync(toPath)) {
+            retask.push({
+                base: path.resolve(toPath, '..'),
+                from: path.basename(fromPath),
+                to: path.basename(toPath),
+            });
+            fromPath = path.resolve(fromPath, '..');
+            toPath = path.resolve(toPath, '..');
+        }
+        // 向底层查找
+        while (retask.length > 0) {
+            let task = retask.pop();
+            if (task) {
+                fs.renameSync(path.resolve(task.base, task.from), path.resolve(task.base, task.to));
+            }
+        }
+    });
+};
+exports.renameDir = renameDir;
 
 
 /***/ }),
