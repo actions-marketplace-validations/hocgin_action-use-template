@@ -1,2 +1,4 @@
-./dist/
-yarn.lock
+../dist/
+../yarn.lock
+env_file.env
+../node_modules/**

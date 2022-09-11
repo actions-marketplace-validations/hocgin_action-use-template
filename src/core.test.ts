@@ -2,11 +2,10 @@ import * as path from "path";
 
 jest.mock('@actions/core');
 jest.mock('@actions/github');
-jest.mock('fs');
 
 import * as core from '@actions/core';
 import {when} from 'jest-when';
-import {getEnvByFile, getExcludesByFile, run} from './core';
+import {getEnvByFile, getExcludesByFile, getMatchesFile, run} from './core';
 import * as fs from "fs";
 
 describe('action env [core.js] test', () => {
@@ -49,8 +48,26 @@ describe('action env [core.js] test', () => {
         console.log(result);
     });
 
-    test('test.exclude_file', async () => {
-        let files = getExcludesByFile('/Users/hocgin/Projects/action-use-template/__test__/exclude_file');
+    test('test.exclude_file', () => {
+        let exclude_file = path.resolve(__dirname, '../__test__/exclude_file');
+
+        let files = getExcludesByFile(exclude_file);
+        console.log('files', files);
+    });
+
+    test('test.exclude_file2', () => {
+        let exclude_file = path.resolve(__dirname, '../__test__/exclude_file');
+        let baseDir = process.cwd();
+        let excludeDir = path.resolve(exclude_file, '..');
+
+        let excludesFiles = getExcludesByFile(exclude_file).map(v => path.join(excludeDir, v));
+        let matchesFiles = getMatchesFile(`${baseDir}/**/*`, excludesFiles);
+        console.log('files', matchesFiles);
+    });
+
+    test('test.env_file', () => {
+        let env_file = path.resolve(__dirname, '../__test__/env_file.env');
+        let files = getEnvByFile(env_file);
         console.log('files', files);
     });
 });

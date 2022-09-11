@@ -22,13 +22,21 @@ export async function run(input: Inputs) {
     let env = input.env;
     let overflowReadmeFile = input.overflow_readme_file;
     let excludes: string[] = [];
+    const baseDir = path.resolve(process.cwd());
 
     if (input.exclude) {
-        excludes = [...excludes, ...`${input.exclude}`.split(',').map((value) => value.trim())]
+        let exclude = `${input.exclude}`.split(',').map((value) => value.trim()).map(v => path.join(baseDir, v));
+        excludes = [...excludes, ...exclude]
     }
 
-    if (input.exclude_file) {
-        excludes = [...excludes, ...getExcludesByFile(input.exclude_file)]
+    let excludeFile = input.exclude_file;
+    if (excludeFile) {
+        if (!fs.existsSync(excludeFile)) {
+            throw new Error('input [`exclude_file`] not found');
+        }
+        let excludeDir = path.resolve(excludeFile, '..');
+        let exclude = getExcludesByFile(excludeFile).map(v => path.join(excludeDir, v));
+        excludes = [...excludes, ...exclude]
     }
 
     if (context.eventName === 'created') {
@@ -36,14 +44,9 @@ export async function run(input: Inputs) {
         payload.repository.master_branch;
     }
 
-    const baseDir = path.resolve(process.cwd());
-    let files = glob.sync(`${baseDir}/${input.path}`, {
-        nodir: true,
-        ignore: excludes.map((value) => path.join(baseDir, value))
-    });
-
+    let files = getMatchesFile(`${baseDir}/${input.path}`, excludes);
     if (overflowReadmeFile && fs.existsSync(overflowReadmeFile)) {
-        let data = fs.readFileSync(overflowReadmeFile);
+        let data = String(fs.readFileSync(overflowReadmeFile));
         fs.writeFileSync(data, path.resolve(baseDir, 'README.md'), {flag: 'w'});
     }
 
@@ -71,7 +74,6 @@ export async function run(input: Inputs) {
         }
     }
 
-    console.log('变量参数: ', envObject);
     let basePathLength = `${baseDir}/`.length;
     let changeFiles = [];
     for (let file of files) {
@@ -80,7 +82,6 @@ export async function run(input: Inputs) {
             changeFiles.push(file.substring(basePathLength));
         }
     }
-    console.log('变更的文件列表: ', changeFiles);
 
     let owner = context.repo.owner;
     let repo = context.repo.repo;
@@ -125,7 +126,7 @@ export function getExcludesByFile(file: string): string[] {
     if (!fs.existsSync(file)) {
         throw new Error('input [`exclude_file`] not found');
     }
-    let text: string = fs.readFileSync(file) as any;
+    let text: string = String(fs.readFileSync(file));
     return text.split('\n').map((value) => value.trim()).filter(value => value && value.length > 0);
 }
 
@@ -133,7 +134,7 @@ export function getEnvByFile(file: string): any {
     if (!fs.existsSync(file)) {
         throw new Error('input [`env_file`] not found');
     }
-    let text: string = fs.readFileSync(file) as any;
+    let text: string = String(fs.readFileSync(file));
     let result: any = {};
 
     text.split('\n').filter(line => `${line}`.indexOf('=') > 0).forEach((line) => {
@@ -152,7 +153,7 @@ let templateFile = (inputFile: string, outputFile: string, leftDelim: string, ri
     rightDelim = escape(rightDelim);
 
     let keys = Object.keys(jsonObject) ?? [];
-    let data = fs.readFileSync(inputFile);
+    let data = String(fs.readFileSync(inputFile));
 
     if (!data) {
         return false;
@@ -172,3 +173,11 @@ let templateFile = (inputFile: string, outputFile: string, leftDelim: string, ri
 let escape = (text: string): string => {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 }
+
+export let getMatchesFile = (root: string, ignoreFile: string[]): string[] => {
+    // let ignoreFile = ignore.map((value) => path.join(base, value));
+    return glob.sync(`${root}`, {
+        nodir: true,
+        ignore: ignoreFile
+    });
+};
