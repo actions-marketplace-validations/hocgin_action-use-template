@@ -24,6 +24,9 @@ inputs:
     description: '替换的变量文件路径'
   env:
     description: '替换的变量列表: key=value,key2=value2'
+  debug:
+    default: 'false'
+    description: '调试'
 #outputs:
 runs:
   using: node12

@@ -10,6 +10,7 @@ export interface Inputs {
     overflow_readme_file?: string;
     env_file?: string;
     env?: string;
+    debug?: boolean;
 }
 
 let getInput = (): Inputs => ({
@@ -21,6 +22,7 @@ let getInput = (): Inputs => ({
     overflow_readme_file: core.getInput('overflow_readme_file'),
     env_file: core.getInput('env_file'),
     env: core.getInput('env'),
+    debug: core.getInput('debug') === 'true'
 })
 
 try {

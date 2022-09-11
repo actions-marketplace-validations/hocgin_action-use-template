@@ -7,6 +7,8 @@ import * as path from "path";
 import {glob} from "glob";
 import {Inputs} from "./main";
 
+let debugPrintf = (...args: any) => {
+};
 
 export async function run(input: Inputs) {
     const octokit = github.getOctokit(process.env.GITHUB_TOKEN!);
@@ -15,6 +17,7 @@ export async function run(input: Inputs) {
     let repository_full_name = context.payload.repository?.full_name;
     let repository_html_url = context.payload.repository?.html_url;
     let git_ref = context.ref;
+    debugPrintf = input.debug ? console.log : debugPrintf;
 
     let envFile = input.env_file;
     let leftDelim = input.left_delim;
@@ -23,6 +26,7 @@ export async function run(input: Inputs) {
     let overflowReadmeFile = input.overflow_readme_file;
     let excludes: string[] = [];
     const baseDir = path.resolve(process.cwd());
+    debugPrintf('==> 工作目录', baseDir);
 
     if (input.exclude) {
         let exclude = `${input.exclude}`.split(',').map((value) => value.trim()).map(v => path.join(baseDir, v));
@@ -39,12 +43,10 @@ export async function run(input: Inputs) {
         excludes = [...excludes, ...exclude]
     }
 
-    if (context.eventName === 'created') {
-        const payload = context.payload as RepositoryCreatedEvent;
-        payload.repository.master_branch;
-    }
-
-    let files = getMatchesFile(`${baseDir}/${input.path}`, excludes);
+    let scanDir = `${baseDir}/${input.path}`;
+    debugPrintf('==> 扫描目录', scanDir);
+    debugPrintf('==> 过滤文件或目录', excludes);
+    let files = getMatchesFile(scanDir, excludes);
 
     if (overflowReadmeFile && fs.existsSync(overflowReadmeFile)) {
         let data = String(fs.readFileSync(overflowReadmeFile));
@@ -74,7 +76,8 @@ export async function run(input: Inputs) {
             ...envJson
         }
     }
-    let dirList = getMatchesDir(`${baseDir}/${input.path}`, excludes, Object.keys(envObject));
+    debugPrintf('==> 替换变量', envObject);
+    // let dirList = getMatchesDir(`${baseDir}/${input.path}`, excludes, Object.keys(envObject));
 
     let basePathLength = `${baseDir}/`.length;
     let changeFiles = [];
@@ -95,9 +98,10 @@ export async function run(input: Inputs) {
     let repo = context.repo.repo;
 
     if (changeFiles.length === 0 && changeDirs.length === 0) {
-        console.log('no change')
+        console.log('no change no commit')
         return;
     }
+    debugPrintf('==> change files', changeFiles);
 
     const currentCommit = await octokit.git.getCommit({
         owner,
@@ -158,7 +162,7 @@ export function getEnvByFile(file: string): any {
 }
 
 let templateFile = (inputFile: string, outputFile: string, leftDelim: string, rightDelim: string, jsonObject: any = {}): boolean => {
-    console.log(`template file: ${inputFile}, output file: ${outputFile}`);
+    debugPrintf(`替换过程: 替换前文件=${inputFile}, 替换后文件=${outputFile}`);
     if (!fs.existsSync(inputFile)) {
         return false;
     }
